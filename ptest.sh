@@ -1,50 +1,80 @@
 #!/bin/bash
 
 function what_was_passed_to_this_script() {
-  if [ -d "${PASSED}" ]; then
-    echo "directory";
+  passed=$1
+  if [[ -d $passed ]]; then
+    run_all_java_programs $passed
+  elif [[ -f $passed ]]; then
+    run_java_program $passed
+    return 0
   else
-    if [ -f "${PASSED}" ]; then
-      echo "file"
-    else
-      exit 1;
-    fi
+    return 1
   fi
-}
-
-function list_all_files() {
-
-}
-
-function compile_all_java_files() {
-  find -name "*.java" > sources.txt
-  javac @sources.txt
 }
 
 function run_all_java_programs() {
-  for i in *.class; do
-    subdircount="$(find . -maxdepth 1 -type d | wc -l)"
-    if [ $subdircount -lt 1]; then
-      echo "no input data";
-      exit 1;
-    fi
-    local file=${i%.class}
-    for dir in ./data/$i; do
-      run_on_input_files ${file} ${dir}
-    done
+  for java_source_code in *.java; do
+    local file=$java_source_code
+    echo $file
+    run_java_program $file
   done
 }
 
+function run_java_program() {
+  echo "$1"
+  java_file=$1
+  echo -n "Running ${java_file}..."
+
+  # Attempt to compile.
+	javac $java_file 2> /dev/null
+	compile_val=$?
+	if [[ $compile_val != 0 ]]; then
+		echo "** fail ** (failed to compile)"
+    return 1
+	fi
+
+  subdircount="$(find . -maxdepth 1 -type d | wc -l)"
+  if [[ $subdircount -lt 1 ]]; then
+    echo "no input data"
+    return 1
+  fi
+
+  local file=${java_file%.*}
+  for dir in data/$file; do
+    run_on_input_files ${file} ${dir}
+  done
+  return 0
+}
+
 function run_on_input_files() {
-  echo "$1 is the filename and $2 is the directory"
   local file=$1
   local dir=$2
-  java $javafile > output$file.txt 2> /dev/null
+  local result=${file}Output.txt
+  touch $result
+  echo -n "$(java $file)" > $result 2> /dev/null
   execution_val=$?
   if [[ $execution_val != 0 ]]; then
     echo "** fail ** (program crashed)";
-    continue;
+    return 1 
   fi
 
-  diff output$file.txt $dir/$file.out
+  diff $result $dir/case001/$file.out> /dev/null
+	diff_val=$?
+	
+	# Output results based on diff's return value.
+	if  [[ $diff_val != 0 ]]; then
+		echo "** fail ** (output does not match)"
+	else
+		echo "PASS!"
+		PASS_CNT=`expr $PASS_CNT + 1`
+	fi
+  return 0
 }
+
+function clean_up() {
+  rm -f *.class
+  rm -f *.txt
+}
+
+what_was_passed_to_this_script $1
+clean_up
