@@ -1,8 +1,15 @@
 #!/bin/bash
-wrong="\033[0;31m\u2717\033[0m "
+red="\033[0;91m"
+nocolor="\033[0m"
+green="\033[0;92m"
+yellow="\033[0;33m"
+blue="\033[38;5;111m"
+
+wrong="${red}\u2717${nocolor}"
 fat_wrong="\u2718"
-right="\033[0;32m\u2713\033[0m"
+right="${green}\u2713${nocolor}"
 fat_right="u2714"
+
 function what_was_passed_to_this_script() {
   passed=$1
   if [[ -d $passed ]]; then
@@ -25,7 +32,7 @@ function run_all_java_programs() {
 
 function run_java_program() {
   java_file=$1
-  echo -n "Running ${java_file}..."
+  printf "${blue}\e[1mRunning ${java_file}...${nocolor}"
 
   javac $java_file 2> /dev/null
   compile_val=$?
@@ -83,9 +90,11 @@ function clean_up() {
 
 function print_right_aligned() {
   local file=$1
+  file=${file#*/}
+  file=${file#*/}
   local result=$2
   local output=$3
-printf "%25s %35s" "${file#*a/}..." "${result}"
+  printf "%25s %35s" "${file}..." "${result}"
   if [[ $result = "PASS!" ]]; then
     printf " ${right}\n"
   else
