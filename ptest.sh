@@ -15,17 +15,14 @@ function what_was_passed_to_this_script() {
 function run_all_java_programs() {
   for java_source_code in *.java; do
     local file=$java_source_code
-    echo $file
     run_java_program $file
   done
 }
 
 function run_java_program() {
-  echo "$1"
   java_file=$1
   echo -n "Running ${java_file}..."
 
-  # Attempt to compile.
 	javac $java_file 2> /dev/null
 	compile_val=$?
 	if [[ $compile_val != 0 ]]; then
@@ -40,8 +37,10 @@ function run_java_program() {
   fi
 
   local file=${java_file%.*}
-  for dir in data/$file; do
-    run_on_input_files ${file} ${dir}
+  for program in data/$file; do
+    for case in $program/*/; do
+      run_on_input_files ${file} ${case}
+    done
   done
   return 0
 }
@@ -49,6 +48,7 @@ function run_java_program() {
 function run_on_input_files() {
   local file=$1
   local dir=$2
+
   local result=${file}Output.txt
   touch $result
   echo -n "$(java $file)" > $result 2> /dev/null
@@ -58,10 +58,9 @@ function run_on_input_files() {
     return 1 
   fi
 
-  diff $result $dir/case001/$file.out> /dev/null
+  diff $result $dir/$file.out> /dev/null
 	diff_val=$?
 	
-	# Output results based on diff's return value.
 	if  [[ $diff_val != 0 ]]; then
 		echo "** fail ** (output does not match)"
 	else
@@ -76,5 +75,16 @@ function clean_up() {
   rm -f *.txt
 }
 
+
+echo ""
+echo "================================================================"
+echo "Running Test Cases"
+echo "================================================================"
+echo ""
 what_was_passed_to_this_script $1
 clean_up
+
+printf "X \u2717\n"
+printf "X \u2718\n"
+printf "Checkmark \u2713\n"
+printf "Heavy Checkmark \u2714\n"
