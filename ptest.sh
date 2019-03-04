@@ -61,16 +61,17 @@ function run_on_input_files() {
   local file=$1
   local dir=$2
 
-  local result=${file}Output.txt
+  local result=${file}_output.txt
   touch $result
-  echo -n "$(java $file)" > $result 2> /dev/null
+  local input_file=$dir*.in
+  echo "$(cat ${input_file} | java $file)" > $result 2> /dev/null
   execution_val=$?
   if [[ $execution_val != 0 ]]; then
     print_right_aligned ${dir} "** fail ** (program crashed)" ${wrong}
     return 1 
   fi
 
-  diff $result $dir/$file.out> /dev/null
+  diff -Z $result $dir*.out> /dev/null
   diff_val=$?
   
   if  [[ $diff_val != 0 ]]; then
