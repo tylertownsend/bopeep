@@ -22,6 +22,7 @@ cp -r ${FILES_TO_COPY} ${DESTINATION}
 # Make the files
 EXECUTABLE=${PROGRAM_NAME}
 touch ${EXECUTABLE}
+[ -e "/usr/bin${EXECUTABLE}" ] && rm "$/usr/bin/{EXECUTABLE}"
 echo "#!/bin/bash" >> ${EXECUTABLE}
 echo "bash ${DESTINATION}/${PROGRAM} "'$1' >> ${EXECUTABLE}
 chmod +x ${EXECUTABLE}
