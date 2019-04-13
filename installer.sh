@@ -2,7 +2,7 @@
 
 PROGRAM="ptest.sh"
 PROGRAM_NAME="ptest"
-CURR_DIR=$PWD
+FILES_TO_COPY="${PROGRAM} utils.sh"
 
 function sleeping() {
   sleep .5;
@@ -14,16 +14,16 @@ echo ""
 sleeping
 
 # Create the folder to store the folder
-DESTINATION="${HOME}/${PROGRAM_NAME}"
+DESTINATION="/opt/${PROGRAM_NAME}"
 mkdir -p ${DESTINATION}
-cp -r . ${DESTINATION}
+cp -r ${FILES_TO_COPY} ${DESTINATION}
 
 
 # Make the files
 EXECUTABLE=${PROGRAM_NAME}
 touch ${EXECUTABLE}
 echo "#!/bin/bash" >> ${EXECUTABLE}
-echo "bash ${DESTINATION}/${PROGRAM}" >> ${EXECUTABLE}
+echo "bash ${DESTINATION}/${PROGRAM} "'$1' >> ${EXECUTABLE}
 chmod +x ${EXECUTABLE}
 mv ${EXECUTABLE} /usr/bin
 
