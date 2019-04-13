@@ -13,9 +13,11 @@ fat_right="u2714"
 function what_was_passed_to_this_script() {
   passed=$1
   if [[ -d $passed ]]; then
+    run_all_python_programs $passed
     run_all_java_programs $passed
     return 0
   elif [[ -f $passed ]]; then
+    run_python_program $passed
     run_java_program $passed
     return 0
   else
@@ -23,10 +25,31 @@ function what_was_passed_to_this_script() {
   fi
 }
 
+function run_all_python_programs() {
+  for python_file in *.py; do
+    local file_name=${python_file%.*}
+    for program in data/$file_name; do
+      for case in $program/*/; do
+        run_on_input_files ${python_file} ${case} "python"
+      done
+    done
+  done
+}
+
 function run_all_java_programs() {
   for java_source_code in *.java; do
     local file=$java_source_code
     run_java_program $file
+  done
+}
+
+function run_python_program() {
+  python_file=$1
+  local file_name=${python_file%.*}
+  for program in data/$file_name; do
+    for case in $program/*/; do
+      run_on_input_files ${python_file} ${case} "python"
+    done
   done
 }
 
@@ -51,7 +74,7 @@ function run_java_program() {
   local file=${java_file%.*}
   for program in data/$file; do
     for case in $program/*/; do
-      run_on_input_files ${file} ${case}
+      run_on_input_files ${file} ${case} "java"
     done
   done
   return 0
