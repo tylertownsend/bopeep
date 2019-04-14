@@ -10,10 +10,13 @@ fat_wrong="\u2718"
 right="${green}\u2713${nocolor}"
 fat_right="u2714"
 
+DIRECTORY="data"
+
 function what_was_passed_to_this_script() {
   local passed=$1
   if [[ -d $passed ]]; then
     run_all_python_programs $passed
+    run_all_c_programs "g++" $passed
     run_all_java_programs $passed
     return 0
   elif [[ -f $passed ]]; then
@@ -24,6 +27,10 @@ function what_was_passed_to_this_script() {
     elif [[ $extension = "java" ]]; then
       run_java_program $passed
       return 0
+    elif [[ $extension = "c" ]]; then
+      run_c_program "gcc" $passed 
+    elif [[ $extension = "cc" ]] || [[ $extension = "cpp" ]]; then
+      run_c_program "g++" $passed 
     else
       return 1
     fi
@@ -43,6 +50,17 @@ function run_all_python_programs() {
   done
 }
 
+function run_all_c_programs() {
+  c_files=("${PWD}/*.c*")
+  if [ ${#c_files[@]} -eq 0 ]; then
+    return 1
+  fi
+
+  for c_file in *.c*; do
+    run_c_program "g++" $c_file
+  done
+}
+
 function run_all_java_programs() {
   java_files=("${PWD}/*.java")
   if [ ${#java_files[@]} -eq 0 ]; then
@@ -56,42 +74,107 @@ function run_all_java_programs() {
 }
 
 function run_python_program() {
-  python_file=$1
-  printf "${blue}\e[1mRunning ${python_file}...${nocolor}"
-  echo ""
-  local file_name=${python_file%.*}
-  for program in data/$file_name; do
-    for case in $program/*/; do
-      run_on_input_files ${python_file} ${case} "python"
-    done
-  done
+  local python_file=$1
+  print_file $python_file
+  run_program "python" $python_file
 }
 
 function run_java_program() {
-  java_file=$1
-  printf "${blue}\e[1mRunning ${java_file}...${nocolor}"
+  local java_file=$1
+  print_file $java_file
 
-  javac $java_file 2> /dev/null
+  compile "javac" $java_file 
+  run_program "java" $java_file
+}
+
+function run_c_program() {
+  local compiler=$1
+  local c_file=$2
+  print_file $c_file
+  local file=${c_file%.*}
+
+  compile $compiler $c_file "-o ${file}.exe"
+  run_program "./" $c_file
+}
+
+function compile {
+  compiler=$1
+  file=$2
+  flags=$3
+
+  $compiler $file $flags 2> /dev/null
   compile_val=$?
   if [[ $compile_val != 0 ]]; then
     echo -e "** fail ** (failed to compile) ${wrong}"
     return 1
   fi
+}
 
-  subdircount="$(find . -maxdepth 1 -type d | wc -l)"
-  if [[ $subdircount -lt 1 ]]; then
-    echo -e "no input data ${fat_wrong}\n"
-    exit 1
+function print_file() {
+  file_name=$1
+  printf "${blue}\e[1mRunning ${file_name}...${nocolor}"
+}
+
+function run_program() {
+  local executor=$1
+  local program_file=$2
+
+  local file_name=${program_file%.*}
+  local file=${program_file}
+  if [ ${file##*.} != 'py' ]; then
+    file=$file_name
   fi
-  echo""
+  check_for_program_data_folder $file_name
 
-  local file=${java_file%.*}
-  for program in data/$file; do
+  for program in data/$file_name; do
+
+    if [ -z "$(ls -A $program)" ]; then
+      printf "\n\n"
+      print_error_location "${program}... ${file_name} HAS NO TEST CASES\n"
+      print_termination
+    fi
+
     for case in $program/*/; do
-      run_on_input_files ${file} ${case} "java"
+      run_on_input_files ${file} ${case} ${executor}
     done
   done
   return 0
+}
+
+function check_for_program_data_folder() {
+  local file_name=$1
+  if [ ! -d $DIRECTORY/$file_name ]; then
+    echo -e "no input data ${fat_wrong}"
+    print_pre_termination_message "A DATA FOLDER IS REQUIRED FOR ALL PROGRAMS\n" 
+    print_termination
+  fi
+  echo ""
+}
+
+function print_error_location() {
+  local message=$1
+  printf "\n\n"
+  printf "${yellow}\e[1mERROR: $message${nocolor}"
+}
+
+function print_pre_termination_message() {
+  local message=$1
+  printf "\n\n"
+  printf "%10s"
+  printf "${red}\e[1m${message}" 
+}
+
+function print_termination() {
+  for i in 1, 2, 3; do
+    printf "%25s" "" 
+    echo ""
+  done
+  printf "${red}\e[1m"
+  printf "%22s" "**************"
+  printf "${red}\e[1m ABORTING PROGRAM"
+  printf " ***************\n"
+  clean_up
+  exit 1
 }
 
 function run_on_input_files() {
@@ -99,18 +182,65 @@ function run_on_input_files() {
   local dir=$2
   local run=$3
 
+  local input_file=$(echo $dir*.in)
+  local output_file=$(echo $dir*.out)
+  
+  check_for_correct_input_data_format $dir $input_file $output_file
+
   local result=${file}_output.txt
   touch $result
-  local input_file=$dir*.in
-  echo "$(cat ${input_file} | $run $file)" > $result 2> /dev/null
+  
+  execute $input_file $run $file $result
+
+  check_for_runtime_error $dir 
+
+  check_result $dir $result $output_file
+}
+
+function execute() {
+  local input_file=$1
+  local run=$2
+  local file=$3
+  local result=$4
+
+  local argument="$run $file"
+  if [ $run == "./" ]; then
+    argument="$run$file.exe"
+  fi
+  echo "$(cat ${input_file} | $argument)" > $result 2> /dev/null
+}
+
+function check_for_correct_input_data_format() {
+  local dir=$1
+  local input_file=$2
+  local output_file=$3
+
+  local input_prefix=${input_file%.*}
+  local output_prefix=${output_file%.*}
+
+  if [ -z "$(ls -A $dir)" ] || [ $output_prefix != $input_prefix ]; then
+    print_error_location "$dir..."
+    print_pre_termination_message "EACH TEST CASE REQUIRES 1 .in and 1 .out FILE\n"
+    print_termination
+  fi
+}
+
+function check_for_runtime_error() {
+  local dir=$1
   execution_val=$?
   if [[ $execution_val != 0 ]]; then
     print_right_aligned ${dir} "** fail ** (program crashed)" ${wrong}
     return 1 
   fi
+}
 
-  diff -Z $result $dir*.out> /dev/null
-  diff_val=$?
+function check_result() {
+  local dir=$1
+  local result=$2
+  local output_file=$3
+
+  diff -Z $result $output_file> /dev/null
+  local diff_val=$?
   
   if  [[ $diff_val != 0 ]]; then
     print_right_aligned ${dir} "** fail ** (output does not match)" ${wrong}
@@ -120,11 +250,6 @@ function run_on_input_files() {
     PASS_CNT=`expr $PASS_CNT + 1`
   fi
   return 0
-}
-
-function clean_up() {
-  rm -f *.class
-  rm -f *.txt
 }
 
 function print_right_aligned() {
@@ -139,7 +264,12 @@ function print_right_aligned() {
   else
     printf " ${wrong}\n"
   fi
-  # printf "                                                              \u2718\n" 
+}
+
+function clean_up() {
+  rm -f *.class
+  rm -f *.txt
+  rm -f *.exe
 }
 
 function print_header() {
@@ -150,6 +280,14 @@ function print_header() {
   echo ""
 }
 
+function check_for_data_folder() {
+  if [ ! -d "$DIRECTORY" ]; then
+    print_pre_termination_message "pTest REQUIRES THE USE OF A 'data' DIRECTORY"
+    print_termination
+  fi
+}
+
 print_header
+check_for_data_folder
 what_was_passed_to_this_script $1
 clean_up
