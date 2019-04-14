@@ -22,3 +22,12 @@ profile_script='./ptest.sh'
   run check_for_program_data_folder "MissingProgramFolder"
   assert_output -p "no input data"
 }
+
+@test "Should find there is not test cases for program" {
+  source ${profile_script}
+  local test_file="MissingTestCases.java"
+  cd test/fixtures
+  run run_program "javac" ${test_file}
+  assert_output -p "HAS NO TEST CASES"
+  cd ../../
+}
