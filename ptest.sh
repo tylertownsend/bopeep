@@ -11,22 +11,59 @@ right="${green}\u2713${nocolor}"
 fat_right="u2714"
 
 function what_was_passed_to_this_script() {
-  passed=$1
+  local passed=$1
   if [[ -d $passed ]]; then
+    run_all_python_programs $passed
     run_all_java_programs $passed
     return 0
   elif [[ -f $passed ]]; then
-    run_java_program $passed
-    return 0
+    local extension=${passed##*.}
+    if [[ $extension = "py" ]]; then
+      run_python_program $passed
+      return 0
+    elif [[ $extension = "java" ]]; then
+      run_java_program $passed
+      return 0
+    else
+      return 1
+    fi
   else
     return 1
   fi
 }
 
+function run_all_python_programs() {
+  python_files=("${PWD}/*.py")
+  if [ ${#python_files[@]} -eq 0 ]; then
+    return 1
+  fi
+
+  for python_file in *.py; do
+    run_python_program $python_file
+  done
+}
+
 function run_all_java_programs() {
+  java_files=("${PWD}/*.java")
+  if [ ${#java_files[@]} -eq 0 ]; then
+    return 1
+  fi
+
   for java_source_code in *.java; do
     local file=$java_source_code
     run_java_program $file
+  done
+}
+
+function run_python_program() {
+  python_file=$1
+  printf "${blue}\e[1mRunning ${python_file}...${nocolor}"
+  echo ""
+  local file_name=${python_file%.*}
+  for program in data/$file_name; do
+    for case in $program/*/; do
+      run_on_input_files ${python_file} ${case} "python"
+    done
   done
 }
 
@@ -51,7 +88,7 @@ function run_java_program() {
   local file=${java_file%.*}
   for program in data/$file; do
     for case in $program/*/; do
-      run_on_input_files ${file} ${case}
+      run_on_input_files ${file} ${case} "java"
     done
   done
   return 0
@@ -60,11 +97,12 @@ function run_java_program() {
 function run_on_input_files() {
   local file=$1
   local dir=$2
+  local run=$3
 
   local result=${file}_output.txt
   touch $result
   local input_file=$dir*.in
-  echo "$(cat ${input_file} | java $file)" > $result 2> /dev/null
+  echo "$(cat ${input_file} | $run $file)" > $result 2> /dev/null
   execution_val=$?
   if [[ $execution_val != 0 ]]; then
     print_right_aligned ${dir} "** fail ** (program crashed)" ${wrong}
