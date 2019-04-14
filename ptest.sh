@@ -57,15 +57,18 @@ function run_all_java_programs() {
   done
 }
 
-function print_file() {
-  file_name=$1
-  printf "${blue}\e[1mRunning ${file_name}...${nocolor}"
-}
-
 function run_python_program() {
   python_file=$1
   print_file $python_file
   run_program "python" $python_file
+}
+
+function run_java_program() {
+  java_file=$1
+  print_file $java_file
+
+  compile "javac" $java_file 
+  run_program "java" $java_file
 }
 
 function compile {
@@ -80,12 +83,9 @@ function compile {
   fi
 }
 
-function run_java_program() {
-  java_file=$1
-  print_file $java_file
-
-  compile "javac" $java_file 
-  run_program "java" $java_file
+function print_file() {
+  file_name=$1
+  printf "${blue}\e[1mRunning ${file_name}...${nocolor}"
 }
 
 function run_program() {
@@ -121,19 +121,6 @@ function check_for_program_data_folder() {
   echo ""
 }
 
-function print_termination() {
-  for i in 1, 2, 3; do
-    printf "%25s" "" 
-    echo ""
-  done
-  printf "${red}\e[1m"
-  printf "%22s" "**************"
-  printf "${red}\e[1m ABORTING PROGRAM"
-  printf " ***************\n"
-  clean_up
-  exit 1
-}
-
 function print_error_location() {
   local message=$1
   printf "\n\n"
@@ -147,6 +134,19 @@ function print_pre_termination_message() {
   printf "${red}\e[1m${message}" 
 }
 
+function print_termination() {
+  for i in 1, 2, 3; do
+    printf "%25s" "" 
+    echo ""
+  done
+  printf "${red}\e[1m"
+  printf "%22s" "**************"
+  printf "${red}\e[1m ABORTING PROGRAM"
+  printf " ***************\n"
+  clean_up
+  exit 1
+}
+
 function run_on_input_files() {
   local file=$1
   local dir=$2
@@ -154,6 +154,23 @@ function run_on_input_files() {
 
   local input_file=$(echo $dir*.in)
   local output_file=$(echo $dir*.out)
+  
+  check_for_correct_input_data_format $dir $input_file $output_file
+
+  local result=${file}_output.txt
+  touch $result
+  echo "$(cat ${input_file} | $run $file)" > $result 2> /dev/null
+
+  check_for_runtime_error $dir 
+
+  check_result $dir $result $output_file
+}
+
+function check_for_correct_input_data_format() {
+  local dir=$1
+  local input_file=$2
+  local output_file=$3
+
   local input_prefix=${input_file%.*}
   local output_prefix=${output_file%.*}
 
@@ -162,16 +179,21 @@ function run_on_input_files() {
     print_pre_termination_message "EACH TEST CASE REQUIRES 1 .in and 1 .out FILE\n"
     print_termination
   fi
+}
 
-  local result=${file}_output.txt
-  touch $result
-  echo "$(cat ${input_file} | $run $file)" > $result 2> /dev/null
-
+function check_for_runtime_error() {
+  local dir=$1
   execution_val=$?
   if [[ $execution_val != 0 ]]; then
     print_right_aligned ${dir} "** fail ** (program crashed)" ${wrong}
     return 1 
   fi
+}
+
+function check_result() {
+  local dir=$1
+  local result=$2
+  local output_file=$3
 
   diff -Z $result $output_file> /dev/null
   local diff_val=$?
@@ -186,11 +208,6 @@ function run_on_input_files() {
   return 0
 }
 
-function clean_up() {
-  rm -f *.class
-  rm -f *.txt
-}
-
 function print_right_aligned() {
   local file=$1
   file=${file#*/}
@@ -203,6 +220,11 @@ function print_right_aligned() {
   else
     printf " ${wrong}\n"
   fi
+}
+
+function clean_up() {
+  rm -f *.class
+  rm -f *.txt
 }
 
 function print_header() {
