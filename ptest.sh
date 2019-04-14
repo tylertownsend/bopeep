@@ -74,16 +74,23 @@ function run_python_program() {
   done
 }
 
-function run_java_program() {
-  java_file=$1
-  print_file $java_file
+function compile {
+  compiler=$1
+  file=$2
 
-  javac $java_file 2> /dev/null
+  $compiler $java_file 2> /dev/null
   compile_val=$?
   if [[ $compile_val != 0 ]]; then
     echo -e "** fail ** (failed to compile) ${wrong}"
     return 1
   fi
+}
+
+function run_java_program() {
+  java_file=$1
+  print_file $java_file
+
+  compile "javac" $java_file 
 
   local file=${java_file%.*}
   check_for_program_data_folder $file
@@ -100,6 +107,10 @@ function run_java_program() {
     done
   done
   return 0
+}
+
+function run_program() {
+  return 1
 }
 
 function check_for_program_data_folder() {
