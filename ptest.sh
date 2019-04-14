@@ -34,17 +34,12 @@ function what_was_passed_to_this_script() {
 
 function run_all_python_programs() {
   python_files=("${PWD}/*.py")
-  if [ ${#java_files[@]} -eq 0 ]; then
+  if [ ${#python_files[@]} -eq 0 ]; then
     return 1
   fi
 
   for python_file in *.py; do
-    local file_name=${python_file%.*}
-    for program in data/$file_name; do
-      for case in $program/*/; do
-        run_on_input_files ${python_file} ${case} "python"
-      done
-    done
+    run_python_program $python_file
   done
 }
 
@@ -113,7 +108,6 @@ function run_on_input_files() {
     print_right_aligned ${dir} "** fail ** (program crashed)" ${wrong}
     return 1 
   fi
-  echo $result
 
   diff -Z $result $dir*.out> /dev/null
   diff_val=$?
@@ -130,7 +124,7 @@ function run_on_input_files() {
 
 function clean_up() {
   rm -f *.class
-  # rm -f *.txt
+  rm -f *.txt
 }
 
 function print_right_aligned() {
