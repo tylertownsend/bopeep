@@ -1,14 +1,14 @@
 #!/bin/bash
-red="\033[0;91m"
-nocolor="\033[0m"
-green="\033[0;92m"
-yellow="\033[0;33m"
-blue="\033[38;5;111m"
+RED="\033[0;91m"
+NOCOLOR="\033[0m"
+GREEN="\033[0;92m"
+YELLOW="\033[0;33m"
+BLUE="\033[38;5;111m"
 
-wrong="${red}\u2717${nocolor}"
-fat_wrong="\u2718"
-right="${green}\u2713${nocolor}"
-fat_right="u2714"
+WRONG="${RED}\u2717${NOCOLOR}"
+FAT_WRONG="\u2718"
+RIGHT="${GREEN}\u2713${NOCOLOR}"
+FAT_RIGHT="u2714"
 
 DIRECTORY="data"
 
@@ -112,7 +112,7 @@ function compile {
 
 function print_file() {
   file_name=$1
-  printf "${blue}\e[1mRunning ${file_name}...${nocolor}"
+  printf "${BLUE}\e[1mRunning $file_name...${NOCOLOR}"
 }
 
 function run_program() {
@@ -120,7 +120,7 @@ function run_program() {
   local program_file=$2
 
   local file_name=${program_file%.*}
-  local file=${program_file}
+  local file=$program_file
   if [ ${file##*.} != 'py' ]; then
     file=$file_name
   fi
@@ -130,12 +130,12 @@ function run_program() {
 
     if [ -z "$(ls -A $program)" ]; then
       printf "\n\n"
-      print_error_location "${program}... ${file_name} HAS NO TEST CASES\n"
+      print_error_location "$program... $file_name HAS NO TEST CASES\n"
       print_termination
     fi
 
     for case in $program/*/; do
-      run_on_input_files ${file} ${case} ${executor}
+      run_on_input_files $file $case $executor
     done
   done
   return 0
@@ -144,7 +144,7 @@ function run_program() {
 function check_for_program_data_folder() {
   local file_name=$1
   if [ ! -d $DIRECTORY/$file_name ]; then
-    echo -e "no input data ${fat_wrong}"
+    echo -e "no input data ${FAT_WRONG}"
     print_pre_termination_message "A DATA FOLDER IS REQUIRED FOR ALL PROGRAMS\n" 
     print_termination
   fi
@@ -154,14 +154,14 @@ function check_for_program_data_folder() {
 function print_error_location() {
   local message=$1
   printf "\n\n"
-  printf "${yellow}\e[1mERROR: $message${nocolor}"
+  printf "${YELLOW}\e[1mERROR: $message${NOCOLOR}"
 }
 
 function print_pre_termination_message() {
   local message=$1
   printf "\n\n"
   printf "%10s"
-  printf "${red}\e[1m${message}" 
+  printf "${RED}\e[1m${message}" 
 }
 
 function print_termination() {
@@ -169,9 +169,9 @@ function print_termination() {
     printf "%25s" "" 
     echo ""
   done
-  printf "${red}\e[1m"
+  printf "${RED}\e[1m"
   printf "%22s" "**************"
-  printf "${red}\e[1m ABORTING PROGRAM"
+  printf "${RED}\e[1m ABORTING PROGRAM"
   printf " ***************\n"
   clean_up
   exit 1
@@ -260,9 +260,9 @@ function print_right_aligned() {
   local output=$3
   printf "%25s %35s" "${file}..." "${result}"
   if [[ $result = "PASS!" ]]; then
-    printf " ${right}\n"
+    printf " ${RIGHT}\n"
   else
-    printf " ${wrong}\n"
+    printf " ${WRONG}\n"
   fi
 }
 
@@ -287,7 +287,14 @@ function check_for_data_folder() {
   fi
 }
 
-print_header
-check_for_data_folder
-what_was_passed_to_this_script $1
-clean_up
+function run_main() {
+  print_header
+  check_for_data_folder
+  what_was_passed_to_this_script $1
+  clean_up
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
+then
+  run_main ${1}
+fi
