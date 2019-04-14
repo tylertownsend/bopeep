@@ -16,6 +16,7 @@ function what_was_passed_to_this_script() {
   local passed=$1
   if [[ -d $passed ]]; then
     run_all_python_programs $passed
+    run_all_c_programs "g++" $passed
     run_all_java_programs $passed
     return 0
   elif [[ -f $passed ]]; then
@@ -26,6 +27,10 @@ function what_was_passed_to_this_script() {
     elif [[ $extension = "java" ]]; then
       run_java_program $passed
       return 0
+    elif [[ $extension = "c" ]]; then
+      run_c_program "gcc" $passed 
+    elif [[ $extension = "cc" ]] || [[ $extension = "cpp" ]]; then
+      run_c_program "g++" $passed 
     else
       return 1
     fi
@@ -45,6 +50,17 @@ function run_all_python_programs() {
   done
 }
 
+function run_all_c_programs() {
+  c_files=("${PWD}/*.c*")
+  if [ ${#c_files[@]} -eq 0 ]; then
+    return 1
+  fi
+
+  for c_file in *.c*; do
+    run_c_program "g++" $c_file
+  done
+}
+
 function run_all_java_programs() {
   java_files=("${PWD}/*.java")
   if [ ${#java_files[@]} -eq 0 ]; then
@@ -58,24 +74,35 @@ function run_all_java_programs() {
 }
 
 function run_python_program() {
-  python_file=$1
+  local python_file=$1
   print_file $python_file
   run_program "python" $python_file
 }
 
 function run_java_program() {
-  java_file=$1
+  local java_file=$1
   print_file $java_file
 
   compile "javac" $java_file 
   run_program "java" $java_file
 }
 
+function run_c_program() {
+  local compiler=$1
+  local c_file=$2
+  print_file $c_file
+  local file=${c_file%.*}
+
+  compile $compiler $c_file "-o ${file}.exe"
+  run_program "./" $c_file
+}
+
 function compile {
   compiler=$1
   file=$2
+  flags=$3
 
-  $compiler $java_file 2> /dev/null
+  $compiler $file $flags 2> /dev/null
   compile_val=$?
   if [[ $compile_val != 0 ]]; then
     echo -e "** fail ** (failed to compile) ${wrong}"
@@ -93,7 +120,10 @@ function run_program() {
   local program_file=$2
 
   local file_name=${program_file%.*}
-  local file=${program_file%.java}
+  local file=${program_file}
+  if [ ${file##*.} != 'py' ]; then
+    file=$file_name
+  fi
   check_for_program_data_folder $file_name
 
   for program in data/$file_name; do
@@ -159,11 +189,25 @@ function run_on_input_files() {
 
   local result=${file}_output.txt
   touch $result
-  echo "$(cat ${input_file} | $run $file)" > $result 2> /dev/null
+  
+  execute $input_file $run $file $result
 
   check_for_runtime_error $dir 
 
   check_result $dir $result $output_file
+}
+
+function execute() {
+  local input_file=$1
+  local run=$2
+  local file=$3
+  local result=$4
+
+  local argument="$run $file"
+  if [ $run == "./" ]; then
+    argument="$run$file.exe"
+  fi
+  echo "$(cat ${input_file} | $argument)" > $result 2> /dev/null
 }
 
 function check_for_correct_input_data_format() {
@@ -225,6 +269,7 @@ function print_right_aligned() {
 function clean_up() {
   rm -f *.class
   rm -f *.txt
+  rm -f *.exe
 }
 
 function print_header() {
