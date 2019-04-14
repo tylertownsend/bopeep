@@ -65,13 +65,7 @@ function print_file() {
 function run_python_program() {
   python_file=$1
   print_file $python_file
-  echo ""
-  local file_name=${python_file%.*}
-  for program in data/$file_name; do
-    for case in $program/*/; do
-      run_on_input_files ${python_file} ${case} "python"
-    done
-  done
+  run_program "python" $python_file
 }
 
 function compile {
@@ -91,26 +85,30 @@ function run_java_program() {
   print_file $java_file
 
   compile "javac" $java_file 
-
-  local file=${java_file%.*}
-  check_for_program_data_folder $file
-
-  for program in data/$file; do
-
-    if [ -z "$(ls -A $program)" ]; then
-      printf "\n\n"
-      print_error_location "${program}... ${file} HAS NO TEST CASES\n"
-      print_termination
-    fi
-    for case in $program/*/; do
-      run_on_input_files ${file} ${case} "java"
-    done
-  done
-  return 0
+  run_program "java" $java_file
 }
 
 function run_program() {
-  return 1
+  local executor=$1
+  local program_file=$2
+
+  local file_name=${program_file%.*}
+  local file=${program_file%.java}
+  check_for_program_data_folder $file_name
+
+  for program in data/$file_name; do
+
+    if [ -z "$(ls -A $program)" ]; then
+      printf "\n\n"
+      print_error_location "${program}... ${file_name} HAS NO TEST CASES\n"
+      print_termination
+    fi
+
+    for case in $program/*/; do
+      run_on_input_files ${file} ${case} ${executor}
+    done
+  done
+  return 0
 }
 
 function check_for_program_data_folder() {
