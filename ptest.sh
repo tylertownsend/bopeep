@@ -127,8 +127,8 @@ function run_program() {
   check_for_program_data_folder $file_name
 
   for program in data/$file_name; do
-
-    if [ -z "$(ls -A $program)" ]; then
+    local subdircount=`find ${program} -maxdepth 1 -mindepth 1 -type d | wc -l`
+    if [ $subdircount -eq 0 ]; then
       printf "\n\n"
       print_error_location "$program... $file_name HAS NO TEST CASES\n"
       print_termination
