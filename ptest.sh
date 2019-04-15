@@ -40,8 +40,8 @@ function what_was_passed_to_this_script() {
 }
 
 function run_all_python_programs() {
-  python_files=("${PWD}/*.py")
-  if [ ${#python_files[@]} -eq 0 ]; then
+  local myarray=(`find ./ -maxdepth 1 -name "*.py"`)
+  if [ ${#myarray[@]} -eq 0 ]; then
     return 1
   fi
 
@@ -51,8 +51,8 @@ function run_all_python_programs() {
 }
 
 function run_all_c_programs() {
-  c_files=("${PWD}/*.c*")
-  if [ ${#c_files[@]} -eq 0 ]; then
+  local myarray=(`find ./ -maxdepth 1 -name "*.c"`)
+  if [ ${#myarray[@]} -eq 0 ]; then
     return 1
   fi
 
@@ -62,8 +62,8 @@ function run_all_c_programs() {
 }
 
 function run_all_java_programs() {
-  java_files=("${PWD}/*.java")
-  if [ ${#java_files[@]} -eq 0 ]; then
+  local myarray=(`find ./ -maxdepth 1 -name "*.java"`)
+  if [ ${#myarray[@]} -eq 0 ]; then
     return 1
   fi
 
