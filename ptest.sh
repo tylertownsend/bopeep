@@ -23,19 +23,19 @@ function what_was_passed_to_this_script() {
     local extension=${passed##*.}
     if [[ $extension = "py" ]]; then
       run_python_program $passed
-      return 0
     elif [[ $extension = "java" ]]; then
       run_java_program $passed
-      return 0
     elif [[ $extension = "c" ]]; then
       run_c_program "gcc" $passed 
     elif [[ $extension = "cc" ]] || [[ $extension = "cpp" ]]; then
       run_c_program "g++" $passed 
-    else
-      return 1
     fi
+  elif [ $# -eq 0 ]; then
+    run_all_python_programs $passed
+    run_all_c_programs "g++" $passed
+    run_all_java_programs $passed
   else
-    return 1
+    echo "Proper usage: $PROGRAM <path_to_file>"
   fi
 }
 
