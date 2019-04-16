@@ -4,11 +4,15 @@ PROGRAM="ptest.sh"
 PROGRAM_NAME="ptest"
 FILES_TO_COPY="${PROGRAM} utils.sh"
 
+if [[ $EUID -ne 0 ]]; then
+   echo "Please run this script with root privileges." 
+   exit 1
+fi
+
 function sleeping() {
   sleep .5;
 }
 
-echo ""
 echo "Running the ${PROGRAM_NAME} installer"
 echo ""
 sleeping
@@ -17,7 +21,6 @@ sleeping
 DESTINATION="/opt/${PROGRAM_NAME}"
 mkdir -p ${DESTINATION}
 cp -r ${FILES_TO_COPY} ${DESTINATION}
-
 
 # Make the files
 EXECUTABLE=${PROGRAM_NAME}
@@ -28,6 +31,4 @@ echo "bash ${DESTINATION}/${PROGRAM} "'$1' >> ${EXECUTABLE}
 chmod +x ${EXECUTABLE}
 mv ${EXECUTABLE} /usr/bin
 
-echo "Installer finished"
-echo ""
-
+echo "Installer finished!"
