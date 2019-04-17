@@ -45,3 +45,12 @@ setup() {
   assert_output -p "HAS NO TEST CASES"
   cd ../../
 }
+
+@test "Should find there is no input and output data" {
+  local dir="case001"
+  mkdir $dir
+  echo "running code"
+  run check_for_correct_input_data_format $dir
+  assert_output -p "ERROR"
+  rm -r "case001"
+}

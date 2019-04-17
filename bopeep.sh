@@ -231,7 +231,7 @@ function check_for_correct_input_data_format() {
   if [ -z "$(ls -A $dir)" ] || [ $output_prefix != $input_prefix ]; then
     print_error_location "$dir..."
     print_pre_termination_message "EACH TEST CASE REQUIRES 1 .in and 1 .out FILE\n"
-    print_termination
+    # print_termination
   fi
 }
 
@@ -292,7 +292,7 @@ function print_header() {
 
 function check_for_data_folder() {
   if [ ! -d "$DIRECTORY" ]; then
-    print_pre_termination_message "pTest REQUIRES THE USE OF A 'data' DIRECTORY"
+    print_pre_termination_message "bopeep REQUIRES THE USE OF A 'data' DIRECTORY"
     print_termination
   fi
 }
