@@ -8,13 +8,23 @@ profile_script='./ptest.sh'
 @test "Should print header" {
   source ${profile_script}
   run print_header 
-  assert_output -p "Running pTest" 
+  assert_output -p "Running bopeep" 
 }
 
 @test "Should throw a java compile-time error" {
   source ${profile_script}
   run compile "javac" "test/fixtures/WontCompile.java"
   assert_output -p "failed to compile"
+}
+
+@test "Should throw a java runtime-error" {
+  source ${profile_script}
+  run compile "javac" "test/fixtures/RuntimeErrorProgram.java"
+  cd "test/fixtures"
+  touch temp.out
+  run execute "data/RuntimeErrorProgram/input.in" "java" "RuntimeErrorProgram" "temp.out" 
+  assert_output -p "program crashed"
+  cd ../../
 }
 
 @test "Should find there is no program data folder" {

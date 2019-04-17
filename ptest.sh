@@ -178,21 +178,25 @@ function print_termination() {
 }
 
 function run_on_input_files() {
-  local file=$1
+  local program_file=$1
   local dir=$2
   local run=$3
 
-  local input_file=$(echo $dir*.in)
+  local input_data_file=$(echo $dir*.in)
   local output_file=$(echo $dir*.out)
   
-  check_for_correct_input_data_format $dir $input_file $output_file
+  check_for_correct_input_data_format $dir $input_data_file $output_file
 
   local result=${file}_output.txt
   touch $result
   
-  execute $input_file $run $file $result
-
-  check_for_runtime_error $dir 
+  execute $input_data_file $run $program_file $result
+  local return_val=$?
+  if [[ $return_val -eq 1 ]]; then
+    return 0;
+  fi
+  
+  # check_for_runtime_error $dir 
 
   check_result $dir $result $output_file
 }
@@ -207,7 +211,13 @@ function execute() {
   if [ $run == "./" ]; then
     argument="$run$file.exe"
   fi
-  echo "$(cat ${input_file} | $argument)" > $result 2> /dev/null
+
+  cat ${input_file} | $argument > $result 2> /dev/null
+  execution_val=$?
+  if [[ $execution_val != 0 ]]; then
+    print_right_aligned ${dir} "** fail ** (program crashed)" ${WRONG}
+    return 1 
+  fi
 }
 
 function check_for_correct_input_data_format() {
@@ -275,7 +285,7 @@ function clean_up() {
 function print_header() {
   echo ""
   echo "================================================================"
-  echo "                        Running pTest"
+  echo "                        Running bopeep"
   echo "================================================================"
   echo ""
 }
