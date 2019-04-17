@@ -1,7 +1,7 @@
 #!/bin/bash
 
-PROGRAM="ptest.sh"
-PROGRAM_NAME="ptest"
+PROGRAM="bopeep.sh"
+PROGRAM_NAME="bopeep"
 FILES_TO_COPY="${PROGRAM} utils.sh"
 
 if [[ $EUID -ne 0 ]]; then
