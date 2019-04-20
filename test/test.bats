@@ -46,11 +46,27 @@ setup() {
   cd ../../
 }
 
+@test "Should find .out name doesn't match .out name" {
+  local dir="case001"
+  mkdir $dir
+  touch "$dir/input.in"
+  touch "$dir/output.out"
+  run check_for_correct_input_data_format $dir
+  assert_output -p "ERROR"
+  rm -r "$dir"
+}
+
 @test "Should find there is no input and output data" {
   local dir="case001"
   mkdir $dir
-  echo "running code"
   run check_for_correct_input_data_format $dir
   assert_output -p "ERROR"
   rm -r "case001"
+}
+
+@test "Should compile java program" {
+  run compile "javac" "test/fixtures/HelloWorld.java"
+  compile_val=$?
+  assert [ $compile_val=0 ]
+  rm "test/fixtures/HelloWorld.class"
 }
