@@ -172,7 +172,7 @@ function print_termination() {
   printf "${RED}\e[1m"
   printf "%22s" "**************"
   printf "${RED}\e[1m ABORTING PROGRAM"
-  printf " ***************\n"
+  printf " ***************\n${NOCOLOR}"
   clean_up
   exit 1
 }

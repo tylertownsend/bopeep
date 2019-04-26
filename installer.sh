@@ -22,24 +22,17 @@ DESTINATION="/opt/${PROGRAM_NAME}"
 mkdir -p ${DESTINATION}
 cp -r ${FILES_TO_COPY} ${DESTINATION}
 
-# Make the files
-EXECUTABLE=${PROGRAM_NAME}
-touch ${EXECUTABLE}
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  local executable_loc="~/usr/bin/"
-  [ -e "$executable_loc/${EXECUTABLE}" ] && rm "$executable_loc/${EXECUTABLE}"
-  echo "#!/bin/bash" >> ${EXECUTABLE}
-  echo "bash ${DESTINATION}/${PROGRAM} "'$1' >> ${EXECUTABLE}
-  chmod +x ${EXECUTABLE}
-  mv ${EXECUTABLE} $executable_loc
-  local bash_prof_str="alias bopeep='bash $executable_loc/${EXECUTABLE}'"
-  if [ -e "~/.bash_profile" ]; then
-    touch ~/.bash_profile
-  fi
-  "# Added by bopeep installer."
-  bash_prof_str >> ~/.bash_profile
+  bash_prof_str="alias bopeep='bash $DESTINATION/$PRORAM'"
+  echo "" >> ~/.bash_profile
+  echo "# Added by bopeep installer." >> ~/.bash_profiles
+  echo $bash_prof_str >> ~/.bash_profile
   source ~/.bash_profile
 else
+  # Make the files
+  EXECUTABLE=${PROGRAM_NAME}
+  touch ${EXECUTABLE}
+
   [ -e "/usr/bin${EXECUTABLE}" ] && rm "$/usr/bin/{EXECUTABLE}"
   echo "#!/bin/bash" >> ${EXECUTABLE}
   echo "bash ${DESTINATION}/${PROGRAM} "'$1' >> ${EXECUTABLE}
