@@ -11,7 +11,7 @@ setup() {
 }
 
 # teardown() {
-  
+#   rm *.class
 # }
 
 @test "Should print header" {
@@ -68,5 +68,5 @@ setup() {
   run compile "javac" "test/fixtures/HelloWorld.java"
   compile_val=$?
   assert [ $compile_val=0 ]
-  rm "test/fixtures/HelloWorld.class"
+  [ -e "test/fixtures/HelloWorld.class" ] && rm "test/fixtures/HelloWorld.class"
 }
