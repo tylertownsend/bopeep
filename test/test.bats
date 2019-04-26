@@ -68,5 +68,4 @@ setup() {
   run compile "javac" "test/fixtures/HelloWorld.java"
   compile_val=$?
   assert [ $compile_val=0 ]
-  [ -e "test/fixtures/HelloWorld.class" ] && rm "test/fixtures/HelloWorld.class"
 }
